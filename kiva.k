@@ -134,7 +134,7 @@ TOKKWAUTO;       // auto
 
 tokenkind;
 tokenu64;
-tokenstring[128];
+tokenstring[8192]; // 64 KB: holds an identifier (up to 126 bytes) or a string literal (up to 65000 bytes)
 tokenrow;
 tokencol;
 
@@ -399,7 +399,7 @@ lex() {
         c = cnextr();
         i = 0;
         while (c = cpeek()) != '"' {
-            if i > 126 { // tokenstring[128] minus terminator
+            if i > 65000 { // tokenstring[8192] words (64 KB) minus terminator
                 fprintf(stderr, "Bad code: string literal is too long at %d,%d\n", tokenrow+1, tokencol+1);
                 exit(1);
             }
@@ -573,7 +573,7 @@ emitd(x)
 continueaddress;
 breakaddress;
 addrcounter;
-strbuf[1024];
+strbuf[131072]; // 1 MiB for the string literals of the whole program
 strbufsz;
 ra[6];
 
@@ -782,6 +782,10 @@ p6(fl) {
             emits("\n");
 
             length = strlen(&tokenstring)+1;
+            if strbufsz + length + 1 > 1048576 { // strbuf[131072] words; +1 for the next literal's separator
+                fprintf(stderr, "Bad code: string literals exceed 1 MiB in total at %d,%d\n", tokenrow+1, tokencol+1);
+                exit(1);
+            }
 
             memcpy(&strbuf+strbufsz, &tokenstring, length);
             strbufsz = strbufsz + length;

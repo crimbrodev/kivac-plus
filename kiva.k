@@ -429,10 +429,10 @@ lex() {
             i = i + 1;
         }
     }
-    else if isalpha(c) | (c == '_') {
+    else if isalpha(c) | (c == '_') | (c >= 0x80) { // UTF-8: non-ASCII (e.g. Cyrillic) letters allowed
         tokenkind = TOKID;
         i = 0;
-        while isalnum(c) | (c == '_') {
+        while isalnum(c) | (c == '_') | (c >= 0x80) {
             if i > 126 { // tokenstring[128] minus terminator
                 fprintf(stderr, "Bad code: name is too long at %d,%d\n", tokenrow+1, tokencol+1);
                 exit(1);
